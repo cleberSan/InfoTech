@@ -82,10 +82,74 @@ namespace ControleEstoque.Controllers
             }
                 return Json(new { Resultado = resultado, Mensagens = mensagens, IdSalvo = idSalvo });
         }
+        // GET: Cadastro
+        private static List<MarcaProduto> _listaMarcaProduto = new List<MarcaProduto>()
+        {
+            new MarcaProduto() { Id=1, Nome="Hyper-X"},
+            new MarcaProduto() { Id=2, Nome="Razer"},
+            new MarcaProduto() { Id=3, Nome="Corsair"}
+        };
         [Authorize]
         public ActionResult MarcaProduto()
         {
-            return View();
+            return View(_listaMarcaProduto);
+        }
+        [HttpPost]
+        [Authorize]
+        public ActionResult RecuperarMarcaProduto(int id)
+        {
+            return Json(_listaMarcaProduto.Find(x => x.Id == id));
+        }
+        [HttpPost]
+        [Authorize]
+        public ActionResult ExcluirMarcaProduto(int id)
+        {
+            var ret = false;
+            var registroBD = _listaMarcaProduto.Find(x => x.Id == id);
+            if (registroBD != null)
+            {
+                _listaMarcaProduto.Remove(registroBD);
+                ret = true;
+            }
+            return Json(ret);
+        }
+        [HttpPost]
+        [Authorize]
+        public ActionResult SalvarMarcaProduto(MarcaProduto model)
+        {
+            var resultado = "OK";
+            var mensagens = new List<string>();
+            var idSalvo = string.Empty;
+            if (!ModelState.IsValid)
+            {
+                resultado = "AVISO";
+                mensagens = ModelState.Values.SelectMany(x => x.Errors).Select(x => x.ErrorMessage).ToList();
+            }
+            else
+            {
+                try
+                {
+                    var registroBD = _listaMarcaProduto.Find(x => x.Id == model.Id);
+                    if (registroBD == null)
+                    {
+                        registroBD = model;
+                        registroBD.Id = _listaMarcaProduto.Max(x => x.Id) + 1;
+                        _listaMarcaProduto.Add(registroBD);
+                    }
+                    else
+                    {
+                        registroBD.Nome = model.Nome;
+                    }
+
+                    idSalvo = registroBD.Id.ToString();
+                }
+                catch (Exception ex)
+                {
+                    resultado = "ERRO";
+
+                }
+            }
+            return Json(new { Resultado = resultado, Mensagens = mensagens, IdSalvo = idSalvo });
         }
         [Authorize]
         public ActionResult LocalProduto()
